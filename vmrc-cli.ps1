@@ -83,7 +83,7 @@ if ( !$DefaultViServers -or !$DefaultVIServers.Name.Contains($vCenter))
     }
 }
 
-$vmfound=Get-VM $vmname -ErrorAction Stop
+$vmfound=Get-VM $vmname
 if($vmfound.count -ge 1)
 {   
     $vmdisplay=$vmfound|Foreach-Object{ $index = 0 } {[PSCustomObject] @{ Index = $index; Object = $_ }; $index++}
