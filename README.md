@@ -1,3 +1,2 @@
 # vmrc-cli
-Powershell script to search a vm and open the VM console using vmware remote console
-Test upload to github
+Vmware Powershell-cli script to search a vm in existing $defaultviservers and open VM console of the selected vm using vmware remote console. 
