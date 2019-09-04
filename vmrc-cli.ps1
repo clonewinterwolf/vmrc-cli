@@ -17,14 +17,14 @@
     version: 2.0
     author: Zichuan Yang
     Create date: 24/04/2019
-    Last modified: 25/07/2019
+    Last modified: 05/09/2019
     Requirement: PowerCLI 6.0 or above; VMware Remote Console version 8 or above
     Usage vmrc-cli.ps1 <vcenter name> <VM name pattern>    
 #>
 
-Param(     
-    [Parameter(Mandatory=$true)][string]$vCenter,
-    [Parameter(Mandatory=$true)][string]$vmname
+Param(    
+    [Parameter(Mandatory=$true)][string]$vmname,
+    [Parameter(Mandatory=$false)][string]$vCenter='myvcenter'
 )
 
 function Open-MyVMConsoleWindow {
@@ -99,7 +99,7 @@ if($vmfound.count -ge 1)
             exit
         }
     }
-    get-vm $vmfound[$vmindex_select]|select name,powerstate,numCpu,MemoryGB|ft -AutoSize
-    write-host "Open VM remote console:" $vmfound[$vmindex_select] -ForegroundColor Green 
-    $vmfound[$vmindex_select]|Open-MyVMConsoleWindow
+    $vmdisplay[$vmindex_select].object|select name,powerstate,numCpu,MemoryGB|ft -AutoSize
+    write-host "Open VM remote console:" $vmdisplay[$vmindex_select].Object -ForegroundColor Green 
+    $vmdisplay[$vmindex_select].object|Open-MyVMConsoleWindow
 }
