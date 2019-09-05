@@ -11,7 +11,7 @@
     .Parameter vmname
     Name of virtual machine. recommend to include wild char * to get list of vmname*
     .Example 
-    .\vmrc-cli.ps1 rvrwpdvc01 rvrwpd*
+    .\vmrc-cli.ps1  vmname* [vcenter]
     .notes
     vmrc-cli 
     version: 2.0
