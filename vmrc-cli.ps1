@@ -99,7 +99,7 @@ if($vmfound.count -ge 1)
             exit
         }
     }
-    $vmdisplay[$vmindex_select].object|select name,powerstate,numCpu,MemoryGB|ft -AutoSize
+    $vmdisplay[$vmindex_select].object|Select-Object name,powerstate,numCpu,MemoryGB|Format-Table -AutoSize
     write-host "Open VM remote console:" $vmdisplay[$vmindex_select].Object -ForegroundColor Green 
     $vmdisplay[$vmindex_select].object|Open-MyVMConsoleWindow
 }
