@@ -4,7 +4,7 @@
     .Description 
     disply infomraiton  of a VM. 
     .Example
-    .\show-vminfo.ps1 <VM name pattern> <vcenter name>
+    .\get-vminfo.ps1 <VM name pattern> <vcenter name>
      .Parameter vmname
     Name of virtual machine. recommend to include wild char * to get list of vmname*     
     .Parameter vCenter
@@ -12,19 +12,19 @@
     .Example 
     .\get-vminfo.ps1 rvrwpd* rvrwpdvc01 
     .notes
-    show-vmnetinfo.ps1
+    get-vmnetinfo.ps1
     Author: Zichuan Yang
     Ceated date: May 2019
     modified date: 11-08-2019
     description 
     to get VM information including netowrk adapter if vm hardware version support vm.extensiondata 
     Requirement: PowerCLI 6.0 or above; VMware Remote Console version 8 or above
-    Usage show-vminfo.ps1 <VM name pattern> <vcenter name>     
+    Usage get-vminfo.ps1 <VM name pattern> <vcenter name>     
 #>
 
 Param(     
     [Parameter(Mandatory=$true)][string]$vmname,
-    [Parameter(Mandatory=$false)][string]$vCenter="myvcenter"
+    [Parameter(Mandatory=$false)][string]$vCenter="rvvc01"
 )
 
 $certaction = get-PowerCLIConfiguration -scope User
@@ -54,12 +54,20 @@ if ( !$DefaultViServers -or !$DefaultVIServers.Name.Contains($vCenter))
 $vmlist=get-vm $vmname
 foreach ($vm in $vmlist)
 {
-    $vm|Select @{N="VM";E={$vm.Name}},
+    #$vm.guest|fl
+    $vmview=$vm|Get-View
+    $vm|Select-Object @{N="VM";E={$vm.Name}},
+                #@{N="Domain";E={$domain=$VM.Guest.HostName -Split'\.' 
+                #   ($Domain[1..($Domain.Count)] -Join'.').ToLower()}},
+                @{N="OS Hostname";E={$VM.Guest.HostName}},                    
                 @{N="UUID";E={(get-view $vm.id).config.uuid}},
                 @{N='PowerState';E={$vm.PowerState}},
                 @{N='Host Cluster';E={$vm.VMHost.Parent}},                
                 @{N='Host';E={$vm.Uid.Substring($vm.Uid.IndexOf('@')+1).Split(":")[0]+"\"+$vm.VMHost.Name}},
-                @{N='CPUs';E={$vm.NumCpu}},
+                @{N='vCore';E={$vmview.Config.Hardware.NumCPU}},                
+                @{N='CoresPerSocket';E={$vmview.Config.Hardware.NumCoresPerSocket}},
+                @{N='vSocket';E={$vmview.Config.Hardware.NumCPU/$vmview.Config.Hardware.NumCoresPerSocket}},
+                #@{N='CPUs';E={$vm.NumCpu}},
                 @{N='Memory GB';E={$vm.MemoryGB}},
                 @{N='HardwareVersion';E={$vm.HardwareVersion}},                                
                 @{N='OS';E={$vm.Guest.OSFullName}},
@@ -79,7 +87,7 @@ foreach ($vm in $vmlist)
     {   
         #$vmnet|select MacAddress
         #$vmnet.IpConfig|fl
-        write-host "Adapter Name: " $htadapter[$vmnet.MacAddress].Name|ft
+        write-host "Adapter Name: " $htadapter[$vmnet.MacAddress].Name|format-table
         write-host "Adapter Type: " $htadapter[$vmnet.MacAddress].Type
         write-host "Status      : " $htadapter[$vmnet.MacAddress].ConnectionState
         write-host "Mac Address : " $vmnet.MacAddress
@@ -118,21 +126,6 @@ foreach ($vm in $vmlist)
             ThinUsage=[math]::Round($used/$HardDisk.CapacityGB*100,1)  #show actual thin provisioned vmdk usage comparing to provisioned size 
         }
         $array_vmdk+=$objvmdk
-        <#
-        $row = "" | Select HardDisk,VMXpath, ProvisionType,DiskType, CapacityGB,ThinUsage
-            $row.HardDisk = $HardDisk.Name
-            $row.VMXpath = $HardDisk.FileName
-            #$row.Datastore = $HardDisk.Filename.Split("]")[0].TrimStart("[")
-            $row.ProvisionType = $HardDisk.StorageFormat
-            $row.DiskType = $HardDisk.get_DiskType()
-            $row.CapacityGB = ("{0:f1}" -f ($HardDisk.CapacityGB))
-    
-            $hdFileKeys = $HardDisk.Parent.ExtensionData.LayoutEx.Disk | where{$_.Key -eq $HardDisk.ExtensionData.Key}
-            $files = $HardDisk.Parent.ExtensionData.LayoutEx.File | where{$hdFileKeys.Chain[0].FileKey -contains $_.Key}
-            $used = ($files | Measure-Object -Property Size -sum | select -ExpandProperty Sum)/1GB
-            $row.ThinUsage=[math]::Round($used/$HardDisk.CapacityGB*100,1)  #show actual thin provisioned vmdk usage comparing to provisioned size 
-            $row|ft -AutoSize
-        #>
     }
     $array_vmdk|select-object HardDisk,VMXpath,DiskType,ProvisionType,CapacityGB,ThinUsage|ft -AutoSize|out-host
     write-host "* * * * * * * * * * * * * * * * * * * * * * * * * * * *"  -ForegroundColor green

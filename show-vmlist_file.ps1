@@ -24,7 +24,7 @@
 
 Param(     
     [Parameter(Mandatory=$true)][string]$vmlistfile,
-    [Parameter(Mandatory=$false)][string]$vCenter="rvgartvc01"
+    [Parameter(Mandatory=$false)][string]$vCenter="rvvc01"
 )
 
 $certaction = get-PowerCLIConfiguration -scope User
