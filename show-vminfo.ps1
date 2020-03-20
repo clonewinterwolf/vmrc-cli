@@ -4,15 +4,15 @@
     .Description 
     disply infomraiton  of a VM. 
     .Example
-    .\get-vminfo.ps1 <VM name pattern> <vcenter name>
+    .\show-vminfo.ps1 <VM name pattern> <vcenter name>
      .Parameter vmname
     Name of virtual machine. recommend to include wild char * to get list of vmname*     
     .Parameter vCenter
     Name of Vcenter
     .Example 
-    .\get-vminfo.ps1 rvrwpd* rvrwpdvc01 
+    .\show-vminfo.ps1 rvrwpd* rvrwpdvc01 
     .notes
-    get-vmnetinfo.ps1
+    show-vminfo.ps1
     Author: Zichuan Yang
     Ceated date: May 2019
     modified date: 11-08-2019
