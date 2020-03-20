@@ -24,7 +24,7 @@
 
 Param(     
     [Parameter(Mandatory=$true)][string]$vmname,
-    [Parameter(Mandatory=$false)][string]$vCenter="rvvc01"
+    [Parameter(Mandatory=$false)][string]$vCenter="rvgartvc01"
 )
 
 $certaction = get-PowerCLIConfiguration -scope User
@@ -56,6 +56,9 @@ foreach ($vm in $vmlist)
 {
     #$vm.guest|fl
     $vmview=$vm|Get-View
+    #check VirtualUSBController is added to the VM
+    $VM_usbcontroller=$vmview|Where-Object { $_.Config.Hardware.Device.Where({$_.gettype().name -match 'VirtualUSBController'})}
+    #$vmview.Config.Hardware.Device
     $vm|Select-Object @{N="VM";E={$vm.Name}},
                 #@{N="Domain";E={$domain=$VM.Guest.HostName -Split'\.' 
                 #   ($Domain[1..($Domain.Count)] -Join'.').ToLower()}},
@@ -69,6 +72,7 @@ foreach ($vm in $vmlist)
                 @{N='vSocket';E={$vmview.Config.Hardware.NumCPU/$vmview.Config.Hardware.NumCoresPerSocket}},
                 #@{N='CPUs';E={$vm.NumCpu}},
                 @{N='Memory GB';E={$vm.MemoryGB}},
+                @{N='VirtualUSBController';E={($VM_usbcontroller.count -ge 1)}},                
                 @{N='HardwareVersion';E={$vm.HardwareVersion}},                                
                 @{N='OS';E={$vm.Guest.OSFullName}},
                 @{N='VM Size GB';E={[math]::Round($vm.ProvisionedSpaceGB,2)}},
@@ -113,21 +117,26 @@ foreach ($vm in $vmlist)
     $array_vmdk= @() 
     Get-HardDisk -VM $vm | ForEach-Object {
         $HardDisk = $_
-        $hdFileKeys = $HardDisk.Parent.ExtensionData.LayoutEx.Disk | where{$_.Key -eq $HardDisk.ExtensionData.Key};
-        $files = $HardDisk.Parent.ExtensionData.LayoutEx.File | where{$hdFileKeys.Chain[0].FileKey -contains $_.Key};
-        $used = ($files | Measure-Object -Property Size -sum | select -ExpandProperty Sum)/1GB
-
+        $hdFileKeys = $HardDisk.Parent.ExtensionData.LayoutEx.Disk | Where-Object{$_.Key -eq $HardDisk.ExtensionData.Key};
+        $files = $HardDisk.Parent.ExtensionData.LayoutEx.File | where-object{$hdFileKeys.Chain[0].FileKey -contains $_.Key};
+        $used = ($files | Measure-Object -Property Size -sum | select-object -ExpandProperty Sum)/1GB
+        $dcontroller =get-scsicontroller -HardDisk $HardDisk
         $objvmdk =New-Object PSObject -Property @{
             HardDisk= $HardDisk.Name;
             VMXpath = $HardDisk.FileName;
             ProvisionType = $HardDisk.StorageFormat;
-            DiskType = $HardDisk.get_DiskType();
+            #DiskType = $HardDisk.get_DiskType();
             CapacityGB = ("{0:f1}" -f ($HardDisk.CapacityGB));
-            ThinUsage=[math]::Round($used/$HardDisk.CapacityGB*100,1)  #show actual thin provisioned vmdk usage comparing to provisioned size 
+            ThinUsage=[math]::Round($used/$HardDisk.CapacityGB*100,1); #show actual thin provisioned vmdk usage comparing to provisioned size 
+            Controller=$dcontroller.Type.tostring().Substring(7)
         }
         $array_vmdk+=$objvmdk
+
     }
-    $array_vmdk|select-object HardDisk,VMXpath,DiskType,ProvisionType,CapacityGB,ThinUsage|ft -AutoSize|out-host
+    $array_vmdk|select-object HardDisk,VMXpath,ProvisionType,CapacityGB,ThinUsage,Controller|format-table -AutoSize|out-host
+    write-host "VM Snapshots - - - - - - - - - - - - - - - - - - - - - - - - -"  -ForegroundColor green
+
+    $vm|get-snapshot|select-object name,@{N="SIZEGB";E={($_.SizeGB).tostring("#.##")}},Created,CreatedBy,description| format-table -AutoSize
     write-host "* * * * * * * * * * * * * * * * * * * * * * * * * * * *"  -ForegroundColor green
 }# $vm in $vmlist
 
