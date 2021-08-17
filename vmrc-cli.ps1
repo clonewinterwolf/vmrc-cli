@@ -17,7 +17,7 @@
     version: 2.0
     author: Zichuan Yang
     Create date: 24/04/2019
-    Last modified: 05/09/2021
+    Last modified: 18/08/2021
     Requirement: PowerCLI 6.0 or above; VMware Remote Console version 8 or above
     Usage vmrc-cli.ps1 <vcenter name> <VM name pattern>    
 #>
