@@ -24,7 +24,7 @@
 
 Param(     
     [Parameter(Mandatory=$true)][string]$vmname,
-    [Parameter(Mandatory=$false)][string]$vCenter="rvvc01"
+    [Parameter(Mandatory=$false)][string]$vCenter="rvgartvc01"
 )
 
 function Open-MyVMConsoleWindow {
@@ -93,14 +93,22 @@ if($vmfound.count -ge 1)
     while(($vmindex_select -lt 0) -or ($vmindex_select -gt ($vmfound.count-1)))
     {
         $vmindex_select=read-host "Enter VM index (0 to" ($vmfound.count-1)") or -1 to quit"
-        $vmindex_select=[int]::Parse($vmindex_select)
+        try
+        {
+            $vmindex_select=[int]::Parse($vmindex_select)
+        }catch [System.FormatException]
+        {
+            write-host "Selected default index: 0"
+            $vmindex_select = 0
+        }
+
         if($vmindex_select -lt 0)
         {
             write-host "Operation cancelled" -ForegroundColor Green 
             exit
         }
     }
-    $vmdisplay[$vmindex_select].object|select name,powerstate,numCpu,MemoryGB|ft -AutoSize
+    $vmdisplay[$vmindex_select].object|select-object name,powerstate,numCpu,MemoryGB|format-table -AutoSize
     write-host "Open VM remote console:" $vmdisplay[$vmindex_select].Object -ForegroundColor Green 
     $vmdisplay[$vmindex_select].object|Open-MyVMConsoleWindow
     #$vmfound[$vmindex_select]|Open-VMConsoleWindow
