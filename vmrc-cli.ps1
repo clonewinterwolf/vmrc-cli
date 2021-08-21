@@ -5,26 +5,26 @@
      Open virtual machine console of a VM maching vmname parameter in all existing vcenter sessions in $defaultviservers
      Use open-myvmconsolewindow function to fix issue that Virtual CDrom grey out when using $vmfound|Open-VMConsoleWindow
     .Example
-    .\vmrc-cli.ps1 <vcenter name> <vm name>
+    .\vmrc-cli.ps1 <vm name> <vcenter name> 
     .Parameter vCenter
     Name of Vcenter
     .Parameter vmname
     Name of virtual machine. recommend to include wild char * to get list of vmname*
     .Example 
-    .\vmrc-cli.ps1  vmname* [vcenter]
+    .\vmrc-cli.ps1 rvrwpd* rvrwpdvc01
     .notes
     vmrc-cli 
     version: 2.0
     author: Zichuan Yang
     Create date: 24/04/2019
-    Last modified: 05/09/2019
+    Last modified: 18/08/2021
     Requirement: PowerCLI 6.0 or above; VMware Remote Console version 8 or above
     Usage vmrc-cli.ps1 <vcenter name> <VM name pattern>    
 #>
 
-Param(    
+Param(     
     [Parameter(Mandatory=$true)][string]$vmname,
-    [Parameter(Mandatory=$false)][string]$vCenter='myvcenter'
+    [Parameter(Mandatory=$false)][string]$vCenter="rvgartvc01"
 )
 
 function Open-MyVMConsoleWindow {
@@ -32,9 +32,7 @@ function Open-MyVMConsoleWindow {
         .Synopsis
         Function to replicate Open-VMConsoleWindow but use the VMware Remote Console Application
         .Description 
-        Connect to the virtual machine using the currently connected server object. this funciton is to use acquirecloneticket to have virtual 
-        CDrom support in vm console.  
-
+        Connect to the virtual machine using the currently connected server object.
         .Example
         Get-VM "MyVM" | Open-MyVMConsoleWindow
         .Parameter VirtualMachine
@@ -53,6 +51,9 @@ function Open-MyVMConsoleWindow {
             $vi=$vm.Uid.Substring($vm.Uid.IndexOf('@')+1).Split(":")[0]
             $ServiceInstance = Get-View -Id ServiceInstance -Server $vi
             $SessionManager  = Get-View -Id $ServiceInstance.Content.SessionManager -Server $vi
+            #$ticket = $SessionManager.acquireCloneTicket();
+            #$SessionManager.AcquireCloneTicket()
+            #write-host "Current Session is " $SessionManager.currentSession.key  $SessionManager.currentSession.loginTime
             $vmrcURI = "vmrc://clone:" + ($SessionManager.AcquireCloneTicket()) + "@" + $vi + "/?moid=" + $vm.ExtensionData.MoRef.Value
             Start-Process -FilePath $vmrcURI    
         }
@@ -92,14 +93,23 @@ if($vmfound.count -ge 1)
     while(($vmindex_select -lt 0) -or ($vmindex_select -gt ($vmfound.count-1)))
     {
         $vmindex_select=read-host "Enter VM index (0 to" ($vmfound.count-1)") or -1 to quit"
-        $vmindex_select=[int]::Parse($vmindex_select)
+        try
+        {
+            $vmindex_select=[int]::Parse($vmindex_select)
+        }catch [System.FormatException]
+        {
+            write-host "Default index selected: 0"
+            $vmindex_select = 0
+        }
+
         if($vmindex_select -lt 0)
         {
             write-host "Operation cancelled" -ForegroundColor Green 
             exit
         }
     }
-    $vmdisplay[$vmindex_select].object|Select-Object name,powerstate,numCpu,MemoryGB|Format-Table -AutoSize
+    $vmdisplay[$vmindex_select].object|select-object name,powerstate,numCpu,MemoryGB|format-table -AutoSize
     write-host "Open VM remote console:" $vmdisplay[$vmindex_select].Object -ForegroundColor Green 
     $vmdisplay[$vmindex_select].object|Open-MyVMConsoleWindow
+    #$vmfound[$vmindex_select]|Open-VMConsoleWindow
 }
