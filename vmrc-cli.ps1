@@ -98,11 +98,7 @@ if($vmfound.count -ge 1)
             $vmindex_select=[int]::Parse($vmindex_select)
         }catch [System.FormatException]
         {
-<<<<<<< HEAD
-            write-host "Selected default index: 0"
-=======
             write-host "Default index selected: 0"
->>>>>>> 91731d7bc4230dacf2017d682154aed3d1b254a6
             $vmindex_select = 0
         }
 
