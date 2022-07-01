@@ -87,7 +87,7 @@ if ( !$DefaultViServers -or !$DefaultVIServers.Name.Contains($vCenter))
 $vmfound=Get-VM $vmname
 if($vmfound.count -ge 1)
 {   
-    $vmdisplay=$vmfound|Foreach-Object{ $index = 0 } {[PSCustomObject] @{ Index = $index; Object = $_ }; $index++}
+    $vmdisplay=$vmfound|Foreach-Object{[PSCustomObject] @{ Index = $index; Object = $_ }; $index++}
     $vmdisplay|select-object -property index,@{Label="Guest";Expression={$_.object.guest}},@{Label="PowerState";Expression={$_.object.PowerState}},@{Label="VC";Expression={$_.object.Uid.Substring($_.object.Uid.IndexOf('@')+1).Split(":")[0]}}|Format-Table -autosize
     $vmindex_select=-1
     while(($vmindex_select -lt 0) -or ($vmindex_select -gt ($vmfound.count-1)))
