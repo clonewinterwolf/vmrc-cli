@@ -24,7 +24,7 @@
 
 Param(     
     [Parameter(Mandatory=$true)][string]$vmname,
-    [Parameter(Mandatory=$false)][string]$vCenter="rvgartvc01"
+    [Parameter(Mandatory=$false)][string]$vCenter="vc01"
 )
 
 function Open-MyVMConsoleWindow {

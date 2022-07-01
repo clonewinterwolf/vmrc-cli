@@ -15,7 +15,7 @@
 
 
 Param(     
-    [Parameter(Mandatory=$true)][string]$vCenter="rvgartvc01",
+    [Parameter(Mandatory=$true)][string]$vCenter="vc01",
     [Parameter(Mandatory=$true)][string]$vmname
 )
 $MAXSESSTIONIDLEHOUR=1

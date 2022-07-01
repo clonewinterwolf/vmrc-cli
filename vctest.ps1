@@ -3,7 +3,7 @@
 #VMware Remote Console version 8 or above
 
 Param(     
-    [Parameter(Mandatory=$true)][string]$vCenter="rvgartvc01",
+    [Parameter(Mandatory=$true)][string]$vCenter="vc01",
     [Parameter(Mandatory=$true)][string]$vmname
 )
 
