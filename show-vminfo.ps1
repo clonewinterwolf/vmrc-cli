@@ -4,15 +4,15 @@
     .Description 
     disply infomraiton  of a VM. 
     .Example
-    .\show-vminfo.ps1 <VM name pattern> <vcenter name>
+    .\get-vminfo.ps1 <VM name pattern> <vcenter name>
      .Parameter vmname
     Name of virtual machine. recommend to include wild char * to get list of vmname*     
     .Parameter vCenter
     Name of Vcenter
     .Example 
-    .\show-vminfo.ps1 rvrwpd* rvrwpdvc01 
+    .\get-vminfo.ps1 rvrwpd* rvrwpdvc01 
     .notes
-    show-vminfo.ps1
+    get-vmnetinfo.ps1
     Author: Zichuan Yang
     Ceated date: May 2019
     modified date: 11-08-2019
@@ -58,7 +58,6 @@ foreach ($vm in $vmlist)
     $vmview=$vm|Get-View
     #check VirtualUSBController is added to the VM
     $VM_usbcontroller=$vmview|Where-Object { $_.Config.Hardware.Device.Where({$_.gettype().name -match 'VirtualUSBController'})}
-    #$vmview.Config.Hardware.Device
     $vm|Select-Object @{N="VM";E={$vm.Name}},
                 #@{N="Domain";E={$domain=$VM.Guest.HostName -Split'\.' 
                 #   ($Domain[1..($Domain.Count)] -Join'.').ToLower()}},
@@ -72,7 +71,7 @@ foreach ($vm in $vmlist)
                 @{N='vSocket';E={$vmview.Config.Hardware.NumCPU/$vmview.Config.Hardware.NumCoresPerSocket}},
                 #@{N='CPUs';E={$vm.NumCpu}},
                 @{N='Memory GB';E={$vm.MemoryGB}},
-                @{N='VirtualUSBController';E={($VM_usbcontroller.count -ge 1)}},                
+                @{N='VirtualUSBController';E={($VM_usbcontroller.count -ge 1)}},  
                 @{N='HardwareVersion';E={$vm.HardwareVersion}},                                
                 @{N='OS';E={$vm.Guest.OSFullName}},
                 @{N='VM Size GB';E={[math]::Round($vm.ProvisionedSpaceGB,2)}},
@@ -115,7 +114,8 @@ foreach ($vm in $vmlist)
     
     #obtain VM vmdk information
     $array_vmdk= @() 
-    Get-HardDisk -VM $vm | ForEach-Object {
+    Get-HardDisk -VM $vm | ForEach-Object 
+    {
         $HardDisk = $_
         $hdFileKeys = $HardDisk.Parent.ExtensionData.LayoutEx.Disk | Where-Object{$_.Key -eq $HardDisk.ExtensionData.Key};
         $files = $HardDisk.Parent.ExtensionData.LayoutEx.File | where-object{$hdFileKeys.Chain[0].FileKey -contains $_.Key};
@@ -128,15 +128,14 @@ foreach ($vm in $vmlist)
             #DiskType = $HardDisk.get_DiskType();
             CapacityGB = ("{0:f1}" -f ($HardDisk.CapacityGB));
             ThinUsage=[math]::Round($used/$HardDisk.CapacityGB*100,1); #show actual thin provisioned vmdk usage comparing to provisioned size 
-            Controller=$dcontroller.Type.tostring().Substring(7)
+            Controller=$dcontroller.Type
         }
         $array_vmdk+=$objvmdk
-
     }
     $array_vmdk|select-object HardDisk,VMXpath,ProvisionType,CapacityGB,ThinUsage,Controller|format-table -AutoSize|out-host
     write-host "VM Snapshots - - - - - - - - - - - - - - - - - - - - - - - - -"  -ForegroundColor green
 
-    $vm|get-snapshot|select-object name,@{N="SIZEGB";E={($_.SizeGB).tostring("#.##")}},Created,CreatedBy,description| format-table -AutoSize
-    write-host "* * * * * * * * * * * * * * * * * * * * * * * * * * * *"  -ForegroundColor green
-}# $vm in $vmlist
+    $vm|get-snapshot|select-object name,@{N="SIZEGB";E={($_.SizeGB).tostring("#.##")}},Created| format-table -AutoSize
+    write-host "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * "  -ForegroundColor green
 
+}# $vm in $vmlist
